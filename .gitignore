@@ -1,0 +1,6 @@
+/nbproject/private/
+nbproject/project.properties
+nbproject/project.xml
+processdata/process_data.py
+processdata/wfp-vam-pricedb-ebola-oct27.csv
+processdata/wfp-vam-pricedb-ebola-oct27.xlsx
