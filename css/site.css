@@ -1,4 +1,16 @@
 #bar_chart{
     width:100%;
-    height:400px;
+    height:200px;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.sparkchart{
+    height:50px;
+    width:200px;
 }

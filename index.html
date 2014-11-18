@@ -11,6 +11,7 @@
         <script src="js/crossfilter.v1.min.js" charset="utf-8"></script>
         <script src="data/data.js" charset="utf-8"></script>
         <script src="data/products.js" charset="utf-8"></script>
+        <script src="data/regions.js" charset="utf-8"></script>
         <script type="text/javascript">
             var _gaq = _gaq || [];
             _gaq.push(['_setAccount', 'UA-46399763-1']);
@@ -27,7 +28,7 @@
         <div class="container">
             <div class="row">
                 <h1>Ebola stricken countries Market Prices</h1>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="row">
                         <h3>Select Country</h3>
                         <select id="country_select"></select>
@@ -37,9 +38,19 @@
                         <div id="spark_charts"></div>
                     </div>                    
                 </div>
-                <div class="col-md-8">
-                    <h3>Product Prices since January 2013</h3>
-                    <div id="bar_chart"></div>
+                <div class="col-md-9">
+                    <div class="row">
+                        <h3>Product Prices since January 2013</h3>
+                        <div id="bar_chart"></div>
+                    </div>
+                    <div class="row">
+                        <div id="marketdata" class="col-md-6">
+                            
+                        </div>
+                        <div id="map" class="col-md-6">
+                            
+                        </div>                        
+                    </div>
                 </div>
             </div>
         </div>
