@@ -4,15 +4,21 @@ data.forEach(function(e){
 
 var cf = crossfilter(data);
 
+var mapColors = ['#b2182b','#ef8a62','#fddbc7','#d1e5f0','#67a9cf','#2166ac'];
+
 var byCountry = cf.dimension(function(d){return d.adm0_name;});
 var byProduct = cf.dimension(function(d){return d.cm_name;});
 var byDate = cf.dimension(function(d){return d.date;});
+var byRegion = cf.dimension(function(d){return d.adm1_id;})
 
 var groupByDateCount = byDate.group();
 var groupByDateSum = byDate.group().reduceSum(function(d) {return d.mp_price;});
+var groupByRegionCount = byRegion.group();
+var groupByRegionSum = byRegion.group().reduceSum(function(d){return d.mp_price;})
 
 var currentProduct;
 var currentCountry;
+var currentAverage;
 
 function filterChartData(country,product){
     byCountry.filterAll();
@@ -44,6 +50,29 @@ function filterBarData(bar){
     byDate.filterExact(bar);
     return byDate.top(Infinity);
 };
+
+function filterMapData(bar){
+    byCountry.filterAll();
+    byProduct.filterAll();
+    byDate.filterAll();
+    byCountry.filterExact(currentCountry);
+    byProduct.filterExact(currentProduct);    
+    byDate.filterExact(bar); 
+    dataCount = groupByRegionCount.all();
+    dataSum = groupByRegionSum.all();
+    var data = [];
+    dataSum.forEach(function(e,i){
+        var value=0;
+        if(dataCount[i].value==0){
+            value=0;
+        } else {
+            value = e.value/dataCount[i].value;
+            value = value/currentAverage;
+        }
+        data.push({key:e.key,value:value});
+    });
+    return data;
+}
 
 function onCountrySelect(country){
     var html ="";
@@ -133,7 +162,7 @@ function generateSparkBars(product,data){
                 } else if(d.value>0) {
                             return "red";
                 } else {
-                            return "green";
+                            return "steelblue";
                 }                     
             });
 }
@@ -152,7 +181,7 @@ function generateBarChart(data){
         }
     });
     avg=total/count;
-    
+    currentAverage = avg;
     var datadomain = [];
     data.forEach(function(e){
         e.key = keyToYear(e.key);
@@ -226,11 +255,13 @@ function generateBarChart(data){
             })
             .on("mouseover",function(d,i){
                 data = filterBarData(i+1);
-                var html = "";
+                var html = "<p>Average: "+d.value+"</p>";
                 data.forEach(function(e){
                    html = html + "<p>"+ e.adm1_name+": "+e.mp_price+"</p>" ;
                 });
                 $('#marketdata').html(html);
+                data = filterMapData(i+1);
+                colorMap(data);
             });            
             
     svg.append("line")
@@ -266,6 +297,7 @@ function transitionBarChart(data){
         }
     });
     avg=total/count;    
+    currentAverage = avg;
     
     var x = d3.scale.ordinal()
         .rangeRoundBands([0, width]);
@@ -339,7 +371,7 @@ function keyToYear(key){
 function generateMap(){
     var margin = {top: 10, right: 10, bottom: 10, left: 10},
     width = $('#map').width() - margin.left - margin.right,
-    height = 425;
+    height = 375;
    
     var projection = d3.geo.mercator()
         .center([8,11])
@@ -363,7 +395,7 @@ function generateMap(){
         .attr("fill",'#ffffff')
         .attr("opacity",1)
         .attr("id",function(d){
-            return d.properties.PCODE_REF;
+            return "WFP"+d.properties.WFPCODE;
         })
         .attr("class","region");
   
@@ -372,10 +404,10 @@ function generateMap(){
 }
 
 function transitionCountryMap(country){
-    var mapsettings = {"Guinea":{"scale":3200,"centre":[-6.5,8.3]},
-            "Liberia":{"scale":3200,"centre":[-6,5]},
-            "Mali":{"scale":1500,"centre":[5,9]},
-            "Sierra Leone":{"scale":6000,"centre":[-9,7.7]}
+    var mapsettings = {"Guinea":{"scale":3000,"centre":[-5.8,8.5]},
+            "Liberia":{"scale":4500,"centre":[-5.6,5.7]},
+            "Mali":{"scale":1200,"centre":[9,15]},
+            "Sierra Leone":{"scale":6000,"centre":[-9,8]}
         };
     
     var margin = {top: 10, right: 10, bottom: 10, left: 10},
@@ -401,6 +433,30 @@ function transitionCountryMap(country){
         })
         .attr("class","region")
         .attr("stroke","#000000");
+}
+
+function colorMap(data){
+    
+    d3.selectAll(".region").attr("fill","#cccccc");
+    data.forEach(function(e){
+      color = "#cccccc";
+      if(e.value==0){
+          color="#cccccc";
+      } else if(e.value<0.8){
+          color=mapColors[5];
+      }  else if(e.value<0.9){
+          color=mapColors[4];
+      }  else if(e.value<1){
+          color=mapColors[3];
+      }  else if(e.value<1.1){
+          color=mapColors[2];
+      }  else if(e.value<1.2){
+          color=mapColors[1];
+      }  else {
+          color=mapColors[0];
+      }
+      d3.select("#WFP"+e.key).attr("fill",color);
+    });
 }
 
 products.forEach(function(e){
