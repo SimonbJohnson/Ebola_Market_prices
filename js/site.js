@@ -419,8 +419,8 @@ function generateMap(){
         .enter()
         .append("path")
         .attr("d", path)
-        .attr("stroke",'#cccccc')
-        .attr("fill",'#ffffff')
+        .attr("stroke",'#000000')
+        .attr("fill",'#cccccc')
         .attr("opacity",1)
         .attr("id",function(d){
             return "WFP"+d.properties.WFPCODE;
@@ -450,8 +450,7 @@ function transitionCountryMap(country){
         .projection(projection);
     d3.select("#map").selectAll("path")
         .attr("d", path)
-        .attr("stroke",'#cccccc')
-        .attr("fill",'#ffffff')
+        .attr("fill",'#cccccc')
         .attr("opacity",function(d){
             if(d.properties.CNTRY_NAME==country){
                 return 1;
