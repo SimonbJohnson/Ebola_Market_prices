@@ -1,5 +1,6 @@
 #bar_chart{
     width:100%;
+    min-width:650px;
     height:200px;
 }
 
@@ -13,4 +14,18 @@
 .sparkchart{
     height:50px;
     width:200px;
+    padding:5px;
+}
+
+.sparkchart:hover{
+    border-width:2px;
+    border-style:solid;
+    border-color:#2196F3;
+    cursor:pointer;
+}
+
+.selected{
+    border-width:2px;
+    border-style:solid;
+    border-color:#EF5350;
 }

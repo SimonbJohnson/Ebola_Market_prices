@@ -4,7 +4,7 @@ data.forEach(function(e){
 
 var cf = crossfilter(data);
 
-var mapColors = ['#b2182b','#ef8a62','#fddbc7','#d1e5f0','#67a9cf','#2166ac'];
+var mapColors = ['#EF5350','#E98888','#FFCDD2','#BBDEFB','#7AC0F8','#2196F3'];
 
 var byCountry = cf.dimension(function(d){return d.adm0_name;});
 var byProduct = cf.dimension(function(d){return d.cm_name;});
@@ -78,6 +78,7 @@ function onCountrySelect(country){
     var html ="";
     var i = 0;
     $('#spark_charts').html(html);
+    resetMarketData();
     transitionCountryMap(country);
     products.forEach(function(e){
         if(e.country==country){
@@ -87,12 +88,14 @@ function onCountrySelect(country){
                 if(i==0){
                     currentCountry = country;
                     currentProduct = e;
+                    d3.select("#"+e.replace(/\s+/g, '')).classed("selected", true);
                     transitionBarChart(filterChartData(country,e));
+                    changeTitle();
                     i++;
                 }
             });
         }
-    });
+    });   
 }
 
 function generateSparkBars(product,data){
@@ -132,7 +135,12 @@ function generateSparkBars(product,data){
         .on("click",function(){
                 currentProduct = product;
                 currentCountry = $('#country_select').val();
-                transitionBarChart(filterChartData($('#country_select').val(),product));              
+                changeTitle();
+                resetMarketData();
+                transitionBarChart(filterChartData($('#country_select').val(),product));
+                changeTitle();
+                d3.selectAll(".sparkchart").classed("selected", false);
+                d3.select(id).classed("selected", true);
             });
 
     svg.selectAll("sparkBar")
@@ -160,15 +168,15 @@ function generateSparkBars(product,data){
                 if(d.value==avg*-1){
                             return "#dddddd";
                 } else if(d.value>0) {
-                            return "red";
+                            return "#EF5350";
                 } else {
-                            return "steelblue";
+                            return "#2196F3";
                 }                     
             });
 }
 
 function generateBarChart(data){
-    var margin = {top: 10, right: 30, bottom: 30, left: 70},
+    var margin = {top: 10, right: 75, bottom: 30, left: 70},
         width = $("#bar_chart").width() - margin.left - margin.right,
         height =  $("#bar_chart").height() - margin.top - margin.bottom;
     var avg=0;
@@ -250,16 +258,12 @@ function generateBarChart(data){
                 if(d.value==0){
                             return "#dddddd";
                 } else {
-                            return "steelblue";
+                            return "#2196F3";
                 }                     
             })
             .on("mouseover",function(d,i){
                 data = filterBarData(i+1);
-                var html = "<p>Average: "+d.value+"</p>";
-                data.forEach(function(e){
-                   html = html + "<p>"+ e.adm1_name+": "+e.mp_price+"</p>" ;
-                });
-                $('#marketdata').html(html);
+                renderMarketChart(data,i+1);
                 data = filterMapData(i+1);
                 colorMap(data);
             });            
@@ -270,12 +274,26 @@ function generateBarChart(data){
         .attr("x2", width)
         .attr("y2", y(avg))
         .attr("stroke-width", 2)
-        .attr("stroke", "red")
+        .attr("stroke", "#EF5350")
         .attr("id","avgline");
+
+    svg.append("text")
+            .attr("id", "averagelabel1")
+            .attr("x", width+2)
+            .attr("y", y(avg))
+            .text("2013 country")
+            .attr("font-size","12px");
+    
+    svg.append("text")
+            .attr("id", "averagelabel2")
+            .attr("x", width+2)
+            .attr("y", y(avg)+16)
+            .text("average")
+            .attr("font-size","12px");
 }
 
 function transitionBarChart(data){
-    var margin = {top: 10, right: 30, bottom: 30, left: 70},
+    var margin = {top: 10, right: 75, bottom: 30, left: 70},
         width = $("#bar_chart").width() - margin.left - margin.right,
         height =  $("#bar_chart").height() - margin.top - margin.bottom;
 
@@ -347,7 +365,7 @@ function transitionBarChart(data){
                 if(d.value==0){
                             return "#dddddd";
                 } else {
-                            return "steelblue";
+                            return "#2196F3";
                 }                     
             });
 
@@ -358,7 +376,17 @@ function transitionBarChart(data){
         .attr("x2", width)
         .attr("y2", y(avg))
         .attr("stroke-width", 2)
-        .attr("stroke", "red");    
+        .attr("stroke", "#EF5350");
+
+    svg.select("#averagelabel1")
+            .transition()    
+            .attr("x", width+2)
+            .attr("y", y(avg));
+    
+    svg.select("#averagelabel2")
+            .transition()
+            .attr("x", width+2)
+            .attr("y", y(avg)+16);
 }
 
 function keyToYear(key){
@@ -457,6 +485,185 @@ function colorMap(data){
       }
       d3.select("#WFP"+e.key).attr("fill",color);
     });
+}
+
+function renderMarketChart(data,bar){
+    if(data.length==0){
+        $("#marketdata").html("<h3>No Data this month</h3>");
+    } else {
+        $("#marketdata").html("<h3>"+currentProduct+" per "+ units[currentCountry][currentProduct]+" prices for "+keyToYear(bar)+"</h3>");
+    }
+    data.sort(function(a, b) {
+                return d3.descending(a.mp_price, b.mp_price);
+        });
+    data.forEach(function(e,i){
+        e.uniqueid="id"+i;
+        e.percent=e.mp_price/currentAverage;
+    });
+
+    var margin = {top: 80, right: 30, bottom: 30, left: 55},
+        width = $("#marketdata").width() - margin.left - margin.right,
+        height =  (data.length)*22;
+
+    var y = d3.scale.ordinal()
+            .rangeRoundBands([0, height], .1);
+
+    var x = d3.scale.linear()
+        .range([0,width]);    
+    
+    y.domain(data.map(function(d) {return d.uniqueid; }));
+    x.domain([0,d3.max(data,function(d){return d.mp_price})]);
+    d3.select("#marketdata").selectAll("svg").remove();
+    var svg = d3.select("#marketdata").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        
+    svg.selectAll("bar")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("class", "sparkbar")
+            .attr("x", 0)
+            .attr("width", function(d){ return x(d.mp_price);})
+            .attr("y", function(d){;return y(d.uniqueid);})
+            .attr("height", 19)
+            .attr("fill",function(d){
+                if(d.percent==0){
+                    color="#cccccc";
+                } else if(d.percent<0.8){
+                    color=mapColors[5];
+                }  else if(d.percent<0.9){
+                    color=mapColors[4];
+                }  else if(d.percent<1){
+                    color=mapColors[3];
+                }  else if(d.percent<1.1){
+                    color=mapColors[2];
+                }  else if(d.percent<1.2){
+                    color=mapColors[1];
+                }  else {
+                    color=mapColors[0];
+                }
+                return color;
+            });
+            
+    svg.selectAll("text")
+            .data(data)
+            .enter()
+            .append("text")
+            .attr("class", "sparkbar")
+            .attr("x", 10)
+            .attr("y", function(d){return y(d.uniqueid)+14;})
+            .text(function(d){return d.mkt_name +", "+d.adm1_name +" ("+d.mp_price+")";});
+
+    svg.append("text")
+            .attr("class", "legend")
+            .attr("x", 10)
+            .attr("y", -60)
+            .text("Price difference from 2013 country average");
+    
+        svg.append("rect")
+            .attr("x", 0)
+            .attr("y", -45)
+            .attr("width", 10)
+            .attr("height", 10)
+            .attr("fill",mapColors[0]);
+
+        svg.append("text")
+            .attr("x",15)
+            .attr("y",-37)
+            .text("20% or more")
+            .attr("font-size","10px");
+    
+        svg.append("rect")
+            .attr("x", 80)
+            .attr("y", -45)
+            .attr("width", 10)
+            .attr("height", 10)
+            .attr("fill",mapColors[1]);
+
+        svg.append("text")
+            .attr("x",95)
+            .attr("y",-37)
+            .text("10% to 20%")
+            .attr("font-size","10px");
+
+        svg.append("rect")
+            .attr("x", 160)
+            .attr("y", -45)
+            .attr("width", 10)
+            .attr("height", 10)
+            .attr("fill",mapColors[2]);
+
+        svg.append("text")
+            .attr("x",175)
+            .attr("y",-37)
+            .text("0% to 10%")
+            .attr("font-size","10px");    
+
+        svg.append("rect")
+            .attr("x", 0)
+            .attr("y", -25)
+            .attr("width", 10)
+            .attr("height", 10)
+            .attr("fill",mapColors[3]);
+
+        svg.append("text")
+            .attr("x",15)
+            .attr("y",-17)
+            .text("-10% to 0%")
+            .attr("font-size","10px");
+    
+        svg.append("rect")
+            .attr("x", 80)
+            .attr("y", -25)
+            .attr("width", 10)
+            .attr("height", 10)
+            .attr("fill",mapColors[4]);
+
+        svg.append("text")
+            .attr("x",95)
+            .attr("y",-17)
+            .text("-20% to -10%")
+            .attr("font-size","10px");
+
+        svg.append("rect")
+            .attr("x", 160)
+            .attr("y", -25)
+            .attr("width", 10)
+            .attr("height", 10)
+            .attr("fill",mapColors[5]);
+
+        svg.append("text")
+            .attr("x",175)
+            .attr("y",-17)
+            .text("-20% or less")
+            .attr("font-size","10px");
+    
+        svg.append("rect")
+            .attr("x", 240)
+            .attr("y", -25)
+            .attr("width", 10)
+            .attr("height", 10)
+            .attr("fill","#cccccc");
+
+        svg.append("text")
+            .attr("x",255)
+            .attr("y",-17)
+            .text("No data")
+            .attr("font-size","10px");        
+}
+
+function resetMarketData(){
+    d3.selectAll(".region").attr("fill","#cccccc");
+    $("#marketdata").html("<h3>Mouse over bar on the above chart to get a monthly breakdown</h3>");
+}
+
+function changeTitle(){
+    currencies = {"Guinea":"Guinean francs","Liberia":"Liberian dollars","Mali":"West African CFA francs","Sierra Leone":"Sierra Leonean leones"};
+    title = currentProduct +" prices (per "+units[currentCountry][currentProduct]+") in "+currencies[currentCountry]+" from January 2013 to October 2014 for " +currentCountry;
+    $("#productTitle").html(title);
 }
 
 products.forEach(function(e){
