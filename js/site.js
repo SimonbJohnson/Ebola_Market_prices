@@ -224,7 +224,7 @@ function generateBarChart(data){
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-    
+
     svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + height + ")")
@@ -237,7 +237,7 @@ function generateBarChart(data){
     svg.selectAll("rect")
             .data(data)
             .enter()
-            .append("rect")
+            .append("rect") 
             .attr("x", function(d,i) { return x(d.key); })
             .attr("width", x.rangeBand()-1)
             .attr("y", function(d){
@@ -262,11 +262,11 @@ function generateBarChart(data){
                 }                     
             })
             .on("mouseover",function(d,i){
-                data = filterBarData(i+1);
-                renderMarketChart(data,i+1);
-                data = filterMapData(i+1);
-                colorMap(data);
-            });            
+                    data = filterBarData(i+1);
+                    renderMarketChart(data,i+1);
+                    data = filterMapData(i+1);
+                    colorMap(data);
+            });        
             
     svg.append("line")
         .attr("x1", 0)
@@ -289,7 +289,7 @@ function generateBarChart(data){
             .attr("x", width+2)
             .attr("y", y(avg)+16)
             .text("average")
-            .attr("font-size","12px");
+            .attr("font-size","12px");  
 }
 
 function transitionBarChart(data){
