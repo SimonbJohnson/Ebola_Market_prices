@@ -256,7 +256,7 @@ function generateBarChart(data){
             })
             .attr("fill",function(d){
                 if(d.value==0){
-                            return "#dddddd";
+                            return "#ffffff";
                 } else {
                             return "#2196F3";
                 }                     
@@ -363,7 +363,7 @@ function transitionBarChart(data){
             })
             .attr("fill",function(d){
                 if(d.value==0){
-                            return "#dddddd";
+                            return "#ffffff";
                 } else {
                             return "#2196F3";
                 }                     
